@@ -1,2 +1,5 @@
 *.swp
 riscv/
+riscv64/
+build/
+build3/
