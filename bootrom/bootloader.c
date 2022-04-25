@@ -27,6 +27,17 @@
 */
 
 
+unsigned char sm_expected_hash[] = {
+0xe5,0x17,0x49,0x13,0x0b,0x60,0x36,0xfe,
+0x85,0xb2,0x74,0x09,0xa4,0xea,0x3e,0x1c,
+0x07,0x8f,0xe4,0xdc,0xb7,0x6e,0xb6,0x97,
+0xe7,0xe3,0xcd,0xc5,0xff,0x31,0x31,0x44,
+0x62,0x8a,0x1e,0xc1,0x05,0x58,0xce,0xa5,
+0xad,0x94,0x64,0x1d,0xe7,0xfb,0x31,0xfd,
+0xa7,0x59,0x75,0x81,0x15,0xca,0xf1,0x14,
+0x4b,0x2c,0x49,0x60,0x3f,0x42,0xdb,0x3a};
+unsigned int sm_expected_hash_len = 64;
+
 typedef unsigned char byte;
 
 // Sanctum header fields in DRAM
@@ -44,6 +55,20 @@ inline byte random_byte(unsigned int i) {
 #warning Bootloader does not have entropy source, keys are for TESTING ONLY
   return 0xac + (0xdd ^ i);
 }
+
+void stop_boot(){
+  asm volatile( "addi a0, x0, 1;"
+                "addi a7, x0, 93;"
+                "ecall;");  
+}
+
+/*void print_message(){
+  asm volatile( "addi a0, x0, 1;"
+        "la a1, %0;"
+        "addi a2, x0, 64;" 
+        "addi a7, x0, 64;"
+        "ecall;":: "r"(sm_expected_hash));   
+}*/
 
 void bootloader() {
 	//*sanctum_sm_size = 0x200;
@@ -83,6 +108,14 @@ void bootloader() {
   sha3_update(&hash_ctx, (void*)DRAM_BASE, sanctum_sm_size);
   sha3_final(sanctum_sm_hash, &hash_ctx);
 
+
+  for(unsigned int j=0; j<sm_expected_hash_len; j++){
+    if(sm_expected_hash[j] != sanctum_sm_hash[j]){ 
+      //print_message();
+      stop_boot();
+    }
+  } 
+  
   // Combine SK_D and H_SM via a hash
   // sm_key_seed <-- H(SK_D, H_SM), truncate to 32B
   sha3_init(&hash_ctx, 64);
