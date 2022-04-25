@@ -113,9 +113,9 @@ void bootloader() {
     if(sm_expected_hash[j] != sanctum_sm_hash[j]){ 
       //print_message();
       stop_boot();
-    }
+    } 
   } 
-  
+
   // Combine SK_D and H_SM via a hash
   // sm_key_seed <-- H(SK_D, H_SM), truncate to 32B
   sha3_init(&hash_ctx, 64);
